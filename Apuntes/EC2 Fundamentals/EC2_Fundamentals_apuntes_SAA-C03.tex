@@ -1,0 +1,446 @@
+\documentclass[11pt,a4paper]{article}
+
+% ---------- Codificación e idioma ----------
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[utf8]{inputenc}
+  \usepackage[T1]{fontenc}
+  \usepackage{lmodern}
+\else
+  \usepackage{fontspec}
+  \setmainfont{Latin Modern Roman}
+  \setsansfont{Latin Modern Sans}
+  \setmonofont{Latin Modern Mono}
+\fi
+\ifPDFTeX
+  \usepackage[spanish,es-noshorthands]{babel}
+\else
+  \usepackage{babel}
+  \babelprovide[import=es,main]{spanish}
+\fi
+
+% ---------- Diseño ----------
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{needspace}
+\usepackage[most]{tcolorbox}
+\usepackage[colorlinks=true,linkcolor=awsblue,urlcolor=awsblue]{hyperref}
+
+% ---------- Colores ----------
+\definecolor{awsdark}{HTML}{232F3E}
+\definecolor{awsorange}{HTML}{E07B00}
+\definecolor{awsblue}{HTML}{1A5F9E}
+\definecolor{softgray}{HTML}{F4F6F8}
+\definecolor{softblue}{HTML}{EAF2FA}
+\definecolor{softorange}{HTML}{FFF4E5}
+\definecolor{softred}{HTML}{FDECEC}
+\definecolor{softgreen}{HTML}{EBF6EE}
+
+% ---------- Títulos ----------
+\titleformat{\section}
+  {\Large\bfseries\color{awsdark}}
+  {\thesection.}{0.6em}{}
+  [\vspace{-0.6em}\color{awsorange}\rule{\linewidth}{1pt}]
+\titleformat{\subsection}
+  {\large\bfseries\color{awsblue}}
+  {\thesubsection}{0.6em}{}
+\titlespacing*{\section}{0pt}{1.6em}{0.8em}
+
+% ---------- Encabezado y pie ----------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{awsdark}\textbf{Apuntes EC2 Fundamentals}}
+\fancyhead[R]{\small\color{gray}AWS SAA-C03}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Evita títulos huérfanos al final de página
+\let\oldsection\section
+\renewcommand{\section}{\Needspace{9\baselineskip}\oldsection}
+\let\oldsubsection\subsection
+\renewcommand{\subsection}{\Needspace{6\baselineskip}\oldsubsection}
+\setlength{\emergencystretch}{3em}
+
+% ---------- Listas ----------
+\setlist{itemsep=2pt,topsep=4pt,parsep=0pt}
+
+% ---------- Macros ----------
+\newcommand{\fc}{{\small\textcolor{awsorange}{\textbf{[fuera del curso]}}}}
+\newcommand{\en}[1]{\textit{#1}}
+\newcommand{\cmd}[1]{\texttt{#1}}
+
+% ---------- Cajas ----------
+\newtcolorbox{nota}[1][]{
+  colback=softblue, colframe=awsblue, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1}
+\newtcolorbox{alerta}[1][]{
+  colback=softred, colframe=red!60!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1}
+\newtcolorbox{truco}[1][]{
+  colback=softorange, colframe=awsorange, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1}
+\newtcolorbox{ok}[1][]{
+  colback=softgreen, colframe=green!40!black, boxrule=0.6pt, arc=2pt,
+  left=6pt, right=6pt, top=4pt, bottom=4pt, fonttitle=\bfseries, #1}
+
+% ---------- Tablas ----------
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.25}
+
+\title{%
+  {\Huge\bfseries\color{awsdark}Apuntes de EC2 Fundamentals}\\[0.4em]
+  {\Large\color{awsorange}AWS Certified Solutions Architect -- Associate (SAA-C03)}\\[0.4em]
+  {\normalsize\color{gray}Basado en el curso de Stephane Maarek}%
+}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\thispagestyle{fancy}
+
+\begin{nota}[title=Cómo leer estos apuntes]
+Los términos clave van en inglés porque así aparecen en el examen. Lo marcado con \fc{} es conocimiento estándar de AWS que \textbf{no} aparece en las transcripciones del curso.
+\end{nota}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+\section{EC2 Basics}
+
+\subsection{Qué es EC2}
+\begin{itemize}
+  \item \textbf{EC2 = Elastic Compute Cloud.} Servidores virtuales que ``rentas'' de AWS.
+  \item Encarna la idea central del cloud: \textbf{rentar cómputo bajo demanda}, cuando lo necesitas.
+\end{itemize}
+
+\subsection{Qué se elige al lanzar una instancia}
+\begin{itemize}
+  \item \textbf{Operating System (OS)}: Linux (el más popular), Windows, o macOS.
+  \item \textbf{Compute power}: cuánto CPU y cuántos cores.
+  \item \textbf{RAM}: cuánta memoria.
+  \item \textbf{Storage}: por \textbf{red} (EBS o EFS) o \textbf{hardware attached} (EC2 Instance Store).
+  \item \textbf{Networking}: velocidad de la tarjeta de red y tipo de IP pública.
+  \item \textbf{Security Group}: firewall de la instancia (Sección 2).
+  \item \textbf{EC2 User Data}: script de arranque para configurar la instancia en el primer boot.
+\end{itemize}
+
+\subsection{EC2 User Data (bootstrapping)}
+\begin{itemize}
+  \item \textbf{Bootstrapping} = lanzar comandos cuando la máquina arranca.
+  \item El script \textbf{corre una sola vez}, en el primer arranque, y \textbf{nunca más}.
+  \item Propósito: automatizar tareas de arranque -- instalar updates, instalar software, descargar archivos de internet, o cualquier cosa necesaria.
+  \item \textbf{Corre como root user}, así que cualquier comando tiene privilegios de \cmd{sudo}.
+  \item Mientras más se agrega al User Data script, \textbf{más tarda la instancia en arrancar} (más tiempo leyendo y ejecutando el script).
+\end{itemize}
+
+\begin{truco}[title=Regla rápida]
+User Data = una sola vez, como root. No confundir con algo que se ejecuta en cada reinicio.
+\end{truco}
+
+% =====================================================================
+\section{Security Groups \& Classic Ports}
+
+\subsection{Qué son}
+\begin{itemize}
+  \item El \textbf{firewall} alrededor de las instancias EC2.
+  \item Controlan tráfico \textbf{inbound} (entrante) y \textbf{outbound} (saliente).
+  \item \textbf{Solo tienen reglas ``allow''.} No existe una regla ``deny'' dentro de un Security Group.
+  \item Las reglas referencian \textbf{IPs} o \textbf{otros Security Groups}.
+  \item Formato de regla: \textbf{type, protocol (TCP), port, source}. \cmd{0.0.0.0/0} = todo el mundo.
+\end{itemize}
+
+\subsection{Comportamiento por defecto}
+\begin{itemize}
+  \item \textbf{Todo el inbound está bloqueado} por defecto.
+  \item \textbf{Todo el outbound está permitido} por defecto.
+\end{itemize}
+
+\subsection{Reglas de comportamiento}
+\begin{itemize}
+  \item Relación \textbf{muchos a muchos}: un Security Group puede estar en varias instancias, y una instancia puede tener varios Security Groups.
+  \item Atados a la combinación \textbf{región/VPC}: cambiar de región obliga a recrear el Security Group.
+  \item Viven \textbf{fuera} de la instancia EC2: si el tráfico es bloqueado, la instancia \textbf{ni lo ve}.
+  \item Buena práctica: mantener un Security Group \textbf{separado solo para SSH}.
+\end{itemize}
+
+\begin{alerta}[title=Diagnóstico de errores (examinable)]
+\begin{itemize}
+  \item \textbf{Timeout} (se queda esperando, nunca responde) $\rightarrow$ problema de \textbf{Security Group} (tráfico bloqueado).
+  \item \textbf{``Connection refused''} $\rightarrow$ el Security Group \textbf{funcionó bien}; el tráfico llegó, pero la aplicación falló o no está corriendo.
+\end{itemize}
+\end{alerta}
+
+\subsection{Referenciar Security Groups entre sí}
+\begin{itemize}
+  \item En vez de autorizar por IP, un Security Group puede aceptar tráfico \textbf{proveniente de otro Security Group}.
+  \item Así, las instancias se comunican sin importar sus IPs. Muy usado con Load Balancers.
+  \item \textbf{Solo necesita la regla el que recibe la conexión} (inbound), no el que la inicia (su outbound ya está permitido por defecto).
+\end{itemize}
+
+\subsection{Puertos clave para el examen}
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l l L@{}}
+\toprule
+Puerto & Protocolo & Uso \\
+\midrule
+22 & SSH & Login a instancias Linux \\
+22 & SFTP & Transferencia segura de archivos (usa SSH) \\
+21 & FTP & Subir archivos a un file share \\
+80 & HTTP & Sitios web sin cifrar \\
+443 & HTTPS & Sitios web cifrados (estándar hoy) \\
+3389 & RDP & Login a instancias Windows \\
+\bottomrule
+\end{tabularx}
+
+\begin{truco}[title=Truco de memoria]
+\textbf{22 = SSH = Linux.} \quad \textbf{3389 = RDP = Windows.}
+\end{truco}
+
+% =====================================================================
+\section{EC2 Instance Types}
+
+\subsection{Naming convention}
+Ejemplo: \textbf{m5.2xlarge}
+\begin{itemize}
+  \item \textbf{M} = \textit{instance class} (familia, ej. general purpose).
+  \item \textbf{5} = \textit{generación} del hardware (no ``versión''). m5 $\rightarrow$ m6 al mejorar el hardware.
+  \item \textbf{2xlarge} = tamaño dentro de la clase: small $\rightarrow$ large $\rightarrow$ 2xlarge $\rightarrow$ 4xlarge... Más tamaño = más memoria y más CPU.
+\end{itemize}
+
+\subsection{Las 4 familias del examen}
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l L L l@{}}
+\toprule
+Familia & Para qué sirve & Casos de uso & Nombres \\
+\midrule
+General Purpose & Balance entre compute, memoria y networking & Web servers, repositorios de código & T2 (free tier), M5 \\
+\addlinespace
+Compute Optimized & Tareas que exigen mucho CPU & Batch processing, media transcoding, HPC, machine learning, game servers dedicados & C5, C6 \\
+\addlinespace
+Memory Optimized & Procesar grandes datasets \textbf{en RAM} & DBs en memoria, cache distribuido (ElastiCache), BI, procesamiento en tiempo real & R (de RAM), X1, High Memory, Z1 \\
+\addlinespace
+Storage Optimized & Acceso rápido a datasets grandes en \textbf{disco local} & OLTP de alta frecuencia, NoSQL, cache (Redis), data warehousing, sistemas de archivos distribuidos & I, D, H1 \\
+\bottomrule
+\end{tabularx}
+
+\begin{nota}[title=Distinción clave]
+\textbf{Memory Optimized} = procesar en \textbf{RAM}. \textbf{Storage Optimized} = acceso rápido a \textbf{disco local}. Hadoop encaja en Storage Optimized porque necesita throughput de disco, no RAM masiva.
+\end{nota}
+
+\subsection{Ejemplo de comparación (de la transcripción)}
+\begin{itemize}
+  \item \textbf{t2.micro}: 1 vCPU, 1\,GB RAM.
+  \item \textbf{r5.16xlarge}: 16 vCPU, 512\,GB RAM $\rightarrow$ mucho énfasis en memoria.
+  \item \textbf{c5.4xlarge}: 16 vCPU, 32\,GB RAM $\rightarrow$ menos memoria, más CPU relativo.
+\end{itemize}
+
+\subsection{Recursos útiles}
+\begin{itemize}
+  \item Página oficial de tipos de instancia de AWS, para costos y specs actualizados.
+  \item \textbf{ec2instances.info}: sitio de terceros para comparar instancias (costo On-Demand/Reserved, memoria, vCPU).
+\end{itemize}
+
+% =====================================================================
+\section{EC2 Instance Purchasing Options}
+
+\subsection{On-Demand}
+\begin{itemize}
+  \item Pagas por uso: por \textbf{segundo} (Linux/Windows, tras el primer minuto) o por \textbf{hora} (otros OS).
+  \item Costo más alto, pero \textbf{sin compromiso} de tiempo ni pago adelantado.
+  \item Ideal para cargas \textbf{cortas e impredecibles}.
+\end{itemize}
+
+\subsection{Reserved Instances}
+\begin{itemize}
+  \item Descuento de hasta \textbf{72\%} vs. On-Demand.
+  \item Reservas atributos específicos: \textbf{instance type, región, tenancy, OS}.
+  \item Periodo de \textbf{1 o 3 años} (más años = más descuento).
+  \item Pago: \textbf{All / Partial / No upfront} (All upfront = máximo descuento).
+  \item \textbf{Scope}: regional o zonal (AZ específica).
+  \item Ideal para uso \textbf{steady-state} (ej. una base de datos).
+  \item Se pueden \textbf{comprar o vender} en un marketplace.
+  \item \textbf{Convertible Reserved Instances}: permiten cambiar instance type, family, OS, scope y tenancy. Descuento menor: hasta \textbf{66\%}.
+\end{itemize}
+
+\subsection{Savings Plans}
+\begin{itemize}
+  \item Mismo descuento (\textasciitilde70\%) que Reserved, términos de 1 o 3 años.
+  \item Compromiso: un \textbf{monto de gasto por hora} (ej. \$10/hora), no un instance type específico.
+  \item Uso más allá del plan se cobra a precio On-Demand.
+  \item Fijo en \textbf{familia de instancia y región}; flexible en \textbf{tamaño, OS y tenancy}.
+\end{itemize}
+
+\subsection{Spot Instances}
+\begin{itemize}
+  \item Descuento más agresivo: hasta \textbf{90\%}.
+  \item Se pueden perder \textbf{en cualquier momento} si el precio spot sube por encima del máximo definido.
+  \item Ideal para cargas \textbf{resilientes a fallos}: batch jobs, data analysis, image processing.
+  \item \textbf{No aptas} para trabajos críticos ni bases de datos.
+\end{itemize}
+
+\subsection{Dedicated Hosts}
+\begin{itemize}
+  \item Reservas un \textbf{servidor físico completo}, dedicado a ti, con visibilidad del hardware.
+  \item Casos de uso: \textbf{compliance/requisitos regulatorios}, o licencias \textbf{BYOL} (bring your own license) facturadas por socket/core/VM.
+  \item On-Demand por segundo, o reservado 1--3 años.
+  \item \textbf{La opción más cara} de AWS.
+\end{itemize}
+
+\subsection{Dedicated Instances}
+\begin{itemize}
+  \item Corren en hardware dedicado a tu cuenta, pero puedes \textbf{compartir el hardware} con otras instancias propias.
+  \item \textbf{Sin control} sobre el placement ni visibilidad del hardware físico.
+\end{itemize}
+
+\begin{truco}[title=Host vs. Instance]
+\textbf{Dedicated Host} = servidor físico completo, ves el hardware. \textbf{Dedicated Instance} = hardware dedicado a tu cuenta, sin esa visibilidad.
+\end{truco}
+
+\subsection{Capacity Reservations}
+\begin{itemize}
+  \item Reservas capacidad On-Demand en una \textbf{AZ específica}, por cualquier duración.
+  \item \textbf{Sin descuento}: precio On-Demand, \textbf{se cobra aunque no lances instancias}.
+  \item \textbf{Sin compromiso de tiempo}: se cancela cuando quieras.
+  \item Para descuento, se combina con Reserved Instances regionales o Savings Plans.
+  \item Ideal para cargas de corto plazo que \textbf{deben} estar en una AZ específica.
+\end{itemize}
+
+\subsection{Analogía del resort (del curso)}
+\begin{itemize}
+  \item \textbf{On-Demand}: llegas cuando quieres, pagas precio completo.
+  \item \textbf{Reserved}: sabes que te quedas mucho tiempo, reservas con anticipación y te dan buen precio.
+  \item \textbf{Savings Plan}: ``sé que voy a gastar \$300/mes en el hotel'', pero puedes cambiar de tipo de habitación.
+  \item \textbf{Spot}: descuentos de última hora, pero te pueden sacar del cuarto si alguien paga más.
+  \item \textbf{Dedicated Host}: reservas el edificio entero del resort.
+  \item \textbf{Capacity Reservation}: reservas un cuarto sin saber si te vas a quedar, pero si quieres, ahí está (y lo pagas igual).
+\end{itemize}
+
+% =====================================================================
+\section{Spot Instances \& Spot Fleet (deep dive)}
+
+\subsection{Cómo funciona un Spot Instance}
+\begin{itemize}
+  \item Defines un \textbf{max spot price} que estás dispuesto a pagar.
+  \item Consigues la instancia mientras el \textbf{precio spot actual} esté por debajo de tu máximo.
+  \item El precio spot varía por \textbf{oferta y capacidad}, y también \textbf{según la AZ} dentro de la misma región.
+  \item Si el precio sube por encima del máximo: \textbf{2 minutos de gracia} antes de stop/termination.
+  \item En esos 2 minutos: \textbf{shutdown graceful} -- guardar datos y \textbf{dejar de servir tráfico}.
+\end{itemize}
+
+\subsection{Spot Requests}
+Defines: cantidad de instancias, precio máximo, launch specification (AMI, etc.), y rango de validez (\en{from/until}, puede ser infinito).
+
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l L@{}}
+\toprule
+Tipo & Comportamiento \\
+\midrule
+One-time & Se lanza la instancia y el request \textbf{desaparece} \\
+Persistent & Si la instancia se detiene o es interrumpida, el request \textbf{relanza instancias automáticamente} \\
+\bottomrule
+\end{tabularx}
+
+\begin{alerta}[title=Orden correcto para terminar Spot Instances (examinable)]
+\begin{enumerate}
+  \item Primero \textbf{cancelas} el spot request.
+  \item Después \textbf{terminas} las instancias.
+\end{enumerate}
+Si se hace al revés (terminar instancias primero, en modo persistent), el spot request detecta que faltan instancias y \textbf{las vuelve a lanzar}. Se puede cancelar un request en estado \textit{open, active} o \textit{disabled} (no \textit{failed, cancelled} ni \textit{closed}).
+\end{alerta}
+
+\subsection{Spot Fleet}
+\begin{itemize}
+  \item Conjunto de Spot Instances y, opcionalmente, instancias On-Demand.
+  \item Se definen múltiples \textbf{launch pools}: distintos instance types, OS, AZs.
+  \item El fleet intenta cumplir el \textbf{target capacity} dentro de las restricciones de precio, eligiendo el mejor pool automáticamente.
+\end{itemize}
+
+\subsection{Estrategias de asignación de Spot Fleet}
+\begin{tabularx}{\linewidth}{@{}>{\bfseries}l L L@{}}
+\toprule
+Estrategia & Qué hace & Cuándo usarla \\
+\midrule
+lowestPrice & Lanza desde el pool con el precio más bajo & La más popular en el examen; cargas cortas \\
+diversified & Distribuye entre todos los pools definidos & Disponibilidad y cargas largas: si un pool falla, los demás siguen activos \\
+capacityOptimized & Elige el pool con la capacidad óptima disponible & -- \\
+priceCapacityOptimized & Primero elige el pool con más capacidad, luego el de menor precio dentro de ese & La mejor opción para la mayoría de las cargas \\
+\bottomrule
+\end{tabularx}
+
+\begin{truco}[title=No confundir]
+\textbf{diversified} $\neq$ \textbf{capacityOptimized}. Si la pregunta habla de ``disponibilidad'' y ``que el resto del fleet siga si un pool falla'' $\rightarrow$ \textbf{diversified}.
+\end{truco}
+
+% =====================================================================
+\section{Trampas de examen}
+\begin{itemize}
+  \item \textbf{Timeout} $\rightarrow$ Security Group. \textbf{Connection refused} $\rightarrow$ la app, no el Security Group.
+  \item Security Group: solo \textbf{allow}, nunca deny. Todo el inbound bloqueado por defecto, todo el outbound permitido por defecto.
+  \item Referenciar Security Groups: la regla \textbf{inbound} va en quien \textbf{recibe} la conexión, no en quien la inicia.
+  \item \textbf{Memory Optimized} (RAM) vs. \textbf{Storage Optimized} (disco local) -- no confundir.
+  \item \textbf{Dedicated Host}: compliance y BYOL. \textbf{Dedicated Instance}: sin visibilidad de hardware.
+  \item \textbf{Capacity Reservation}: se cobra aunque no se use, sin descuento propio.
+  \item Terminar Spot: \textbf{cancelar el request primero}, terminar instancias después.
+  \item Spot Fleet: \textbf{diversified} = disponibilidad/varios pools. \textbf{lowestPrice} = cargas cortas y precio.
+  \item User Data: corre \textbf{una sola vez}, como \textbf{root}.
+\end{itemize}
+
+% =====================================================================
+\section{Tus puntos débiles (repasar en Anki)}
+\begin{enumerate}
+  \item \textbf{Security Groups}: dirección del tráfico (quién bloquea vs. quién recibe, inbound vs. outbound) -- tu punto más débil del bloque.
+  \item \textbf{User Data}: corre una sola vez, como root/con sudo.
+  \item \textbf{Dedicated Host}: casos de uso son compliance y BYOL, no ``escalar recursos''.
+  \item \textbf{Spot Fleet strategies}: diversified = disponibilidad/pools distribuidos; lowestPrice = cargas cortas; capacityOptimized $\neq$ diversified.
+  \item En preguntas de \textbf{contraste} (``cuál es la diferencia con...''), desarrollar el por qué, no solo dar la respuesta correcta.
+  \item En preguntas de \textbf{caso de uso específico}, recordar el ejemplo textual de la lección en vez de inventar uno propio.
+\end{enumerate}
+
+\begin{nota}[title=Puntaje EC2 Fundamentals]
+\begin{tabularx}{\linewidth}{@{}L r@{}}
+\toprule
+Bloque & Puntaje \\
+\midrule
+1. EC2 Basics & 2.3/3 \\
+2. Security Groups \& Ports & 1.7/3 \\
+3. Instance Types & 2.5/3 \\
+4. Purchasing Options & 3.8/5 \\
+5. Spot Instances \& Spot Fleet & 2.8/4 \\
+\midrule
+\textbf{Total EC2 Fundamentals} & \textbf{13.1/18 (73\%)} \\
+\bottomrule
+\end{tabularx}
+\end{nota}
+
+% =====================================================================
+\section{Vocabulario en inglés para tus respuestas}
+\begin{tabularx}{\linewidth}{@{}>{\itshape}l L@{}}
+\toprule
+Inglés & Nota \\
+\midrule
+network card / network interface & no decir ``red card'' (calco de ``red'' = network en español) \\
+inbound / outbound & no decir ``input'' ni ``onbound'' \\
+to cancel a (spot) request & \textit{cancel}, no \textit{stop}, para requests \\
+to stop / terminate an instance & \textit{stop} o \textit{terminate}, para instancias \\
+to reference security groups & no ``connect security groups'' \\
+cheaper than & con adjetivos cortos: \textit{-er}, no \textit{more} \\
+at any time & no ``in any moment'' \\
+it depends on & recuerda la preposición \textit{on} \\
+budget & no ``presupuesto'' en medio de una frase en inglés \\
+gracefully shut down & guardar datos \textbf{y} dejar de servir tráfico \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section*{Ultra-resumen (léelo antes de dormir)}
+\begin{tcolorbox}[colback=softgray, colframe=awsdark, boxrule=0.8pt, arc=2pt]
+\textbf{EC2} = cómputo bajo demanda. \textbf{User Data} corre una vez, como root. \textbf{Security Groups} solo permiten (allow), inbound bloqueado por defecto, outbound permitido por defecto; timeout = SG, connection refused = la app. \textbf{Instance types}: clase + generación + tamaño; General Purpose, Compute (C), Memory (R, RAM), Storage (I/D/H1, disco). \textbf{Compra}: On-Demand (flexible), Reserved/Savings Plans (steady-state, descuento), Spot (barato pero interrumpible), Dedicated Host (compliance/BYOL), Capacity Reservation (se cobra igual, sin descuento). \textbf{Spot}: 2 minutos de gracia, cancelar el request antes de terminar instancias, diversified para disponibilidad.
+\end{tcolorbox}
+
+\end{document}
